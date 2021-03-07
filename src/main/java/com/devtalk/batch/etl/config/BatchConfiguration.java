@@ -10,29 +10,16 @@ import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.database.builder.JdbcCursorItemReaderBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.client.RestTemplate;
 
 import javax.sql.DataSource;
 
 @Configuration
 @EnableBatchProcessing
-@PropertySource("classpath:application.properties")
 public class BatchConfiguration {
-
-    /**
-     * Load the properties
-     *//*
-    @Value("${spring.datasource.driver}")
-    private String databaseDriver;
-    @Value("${spring.datasource.url}")
-    private String databaseUrl;
-    @Value("${spring.datasource.username}")
-    private String databaseUsername;
-    @Value("${spring.datasource.password}")
-    private String databasePassword;*/
 
     @Autowired
     private JobBuilderFactory jobBuilderFactory;
@@ -40,7 +27,6 @@ public class BatchConfiguration {
     private StepBuilderFactory stepBuilderFactory;
     @Autowired
     private DataSource dataSource;
-
 
 
     private static final String QUERY_FIND_USERS =
@@ -68,18 +54,6 @@ public class BatchConfiguration {
 
     @Bean
     public UserItemWriter itemWriter() {
-        /*FlatFileItemWriter<Users> itemWriter = new FlatFileItemWriter<>();
-        itemWriter.setResource(new FileSystemResource("C:\\Users\\admin\\IdeaProjects\\spring-batch-db-etl-demo\\src\\main\\resources\\users.csv"));
-
-        DelimitedLineAggregator<Users> lineAggregator = new DelimitedLineAggregator<>();
-        lineAggregator.setDelimiter("|");
-
-        BeanWrapperFieldExtractor<Users> fieldExtractor = new BeanWrapperFieldExtractor<>();
-        fieldExtractor.setNames(new String[]{"id", "name", "role", "salary"});
-
-        lineAggregator.setFieldExtractor(fieldExtractor);
-        itemWriter.setLineAggregator(lineAggregator);
-        return itemWriter;*/
         return new UserItemWriter();
     }
 
@@ -87,7 +61,7 @@ public class BatchConfiguration {
     public Step step1() {
         return stepBuilderFactory
                 .get("step1")
-                .<Users, Users>chunk(10)
+                .<Users, Users>chunk(1)
                 .reader(itemReader(dataSource))
                 .faultTolerant()
                 .processor(itemProcessor())
@@ -95,6 +69,7 @@ public class BatchConfiguration {
     }
 
     @Bean
+    @Qualifier("etlJob")
     public Job userJob() {
         return jobBuilderFactory
                 .get("user-etl-job")
@@ -104,7 +79,7 @@ public class BatchConfiguration {
 
     @Bean
     public RestTemplate restTemplate() {
-       return  new RestTemplate();
+        return new RestTemplate();
     }
 
 }
